@@ -1,0 +1,274 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "demo-backend-api",
+    "description": "Demo backend for the QAEngineerAgent workshop.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": ["health"],
+        "summary": "Health check endpoint.",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {"application/json": {"schema": {}}}
+          }
+        }
+      }
+    },
+    "/products": {
+      "get": {
+        "tags": ["products"],
+        "summary": "List products",
+        "description": "Returns a paginated list of products.",
+        "operationId": "list_products_products_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {"type": "integer", "minimum": 1, "maximum": 100, "default": 20}
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {"type": "integer", "minimum": 0, "default": 0}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {"$ref": "#/components/schemas/Product"}
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["products"],
+        "summary": "Create a new product",
+        "description": "Creates a new product. Requires authentication.",
+        "operationId": "create_product_products_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {"type": "string", "title": "Authorization"}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/ProductCreate"}
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Product"}
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          },
+          "409": {
+            "description": "Conflict (SKU already exists)",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          }
+        }
+      }
+    },
+    "/products/{product_id}": {
+      "get": {
+        "tags": ["products"],
+        "summary": "Get product by ID",
+        "operationId": "get_product_products__product_id__get",
+        "parameters": [
+          {
+            "name": "product_id",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Product"}
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          }
+        }
+      }
+    },
+    "/orders/{order_id}": {
+      "get": {
+        "tags": ["orders"],
+        "summary": "Get order by ID",
+        "operationId": "get_order_orders__order_id__get",
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Order"}
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          }
+        }
+      }
+    },
+    "/orders": {
+      "post": {
+        "tags": ["orders"],
+        "summary": "Create a new order",
+        "description": "Creates a new order. Requires authentication.",
+        "operationId": "create_order_orders_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {"type": "string"}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/OrderCreate"}
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Order"}
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          },
+          "404": {
+            "description": "Product not found",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ProductCreate": {
+        "type": "object",
+        "required": ["name", "sku", "price"],
+        "properties": {
+          "name": {"type": "string", "minLength": 1, "maxLength": 200, "description": "Product name"},
+          "sku": {"type": "string", "pattern": "^[A-Z0-9-]{4,20}$", "description": "Stock keeping unit"},
+          "price": {"type": "number", "exclusiveMinimum": 0, "description": "Price in USD"},
+          "stock": {"type": "integer", "minimum": 0, "default": 0, "description": "Units in stock"}
+        }
+      },
+      "Product": {
+        "type": "object",
+        "required": ["id", "name", "sku", "price", "stock", "created_at"],
+        "properties": {
+          "id": {"type": "string"},
+          "name": {"type": "string"},
+          "sku": {"type": "string"},
+          "price": {"type": "number"},
+          "stock": {"type": "integer"},
+          "created_at": {"type": "string", "format": "date-time"}
+        }
+      },
+      "OrderItem": {
+        "type": "object",
+        "required": ["product_id", "quantity"],
+        "properties": {
+          "product_id": {"type": "string"},
+          "quantity": {"type": "integer", "exclusiveMinimum": 0}
+        }
+      },
+      "OrderCreate": {
+        "type": "object",
+        "required": ["customer_email", "items"],
+        "properties": {
+          "customer_email": {"type": "string", "description": "Customer email address"},
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "items": {"$ref": "#/components/schemas/OrderItem"}
+          }
+        }
+      },
+      "Order": {
+        "type": "object",
+        "required": ["id", "customer_email", "items", "total", "status", "created_at"],
+        "properties": {
+          "id": {"type": "string"},
+          "customer_email": {"type": "string"},
+          "items": {
+            "type": "array",
+            "items": {"$ref": "#/components/schemas/OrderItem"}
+          },
+          "total": {"type": "number"},
+          "status": {"type": "string", "description": "Order status: pending|paid|shipped|cancelled"},
+          "created_at": {"type": "string", "format": "date-time"}
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["detail"],
+        "properties": {
+          "detail": {"type": "string"}
+        }
+      }
+    }
+  }
+}
